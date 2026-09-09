@@ -899,28 +899,27 @@ footer{background:var(--maroon-deep);padding:70px 0 30px;border-top:1px solid rg
 </footer>
 
 <script>
-// Header scroll state
-const header = document.getElementById('siteHeader');
-window.addEventListener('scroll', ()=>{
-  header.classList.toggle('scrolled', window.scrollY > 40);
-});
-
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isTouch = window.matchMedia('(hover: none)').matches;
 
-// Hero parallax (scale + drift, matches reference site)
+// All scroll-driven effects run through ONE rAF-throttled handler, so we
+// never do more than one style/layout pass per frame (fixes mobile scroll jank).
+const header = document.getElementById('siteHeader');
 const heroImg = document.querySelector('#heroBg img');
-window.addEventListener('scroll', ()=>{
-  const y = window.scrollY;
-  if(y < window.innerHeight && !reduceMotion){
-    heroImg.style.transform = `scale(${1.15 + y*0.00015}) translateY(${y*0.22}px)`;
-  }
-},{passive:true});
-
-// Independent parallax bands (large media that drifts slower/faster than scroll)
 const parallaxEls = document.querySelectorAll('[data-parallax]');
-if(parallaxEls.length && !reduceMotion){
-  window.addEventListener('scroll', ()=>{
+// JS scroll-parallax fights with native momentum scrolling on touch devices —
+// skip it on mobile entirely, keep only the lightweight header state toggle.
+const enableParallax = !isTouch && !reduceMotion;
+
+let ticking = false;
+function onScrollFrame(){
+  const y = window.scrollY;
+  header.classList.toggle('scrolled', y > 40);
+
+  if(enableParallax){
+    if(y < window.innerHeight){
+      heroImg.style.transform = `scale(${1.15 + y*0.00015}) translateY(${y*0.22}px)`;
+    }
     const vh = window.innerHeight;
     parallaxEls.forEach(el=>{
       const r = el.getBoundingClientRect();
@@ -928,8 +927,15 @@ if(parallaxEls.length && !reduceMotion){
       const progress = (r.top + r.height/2 - vh/2) / vh;
       el.style.transform = `translateY(${(progress*-50).toFixed(1)}px)`;
     });
-  },{passive:true});
+  }
+  ticking = false;
 }
+window.addEventListener('scroll', ()=>{
+  if(!ticking){
+    ticking = true;
+    requestAnimationFrame(onScrollFrame);
+  }
+},{passive:true});
 
 // Mobile menu (fullscreen clip-path overlay, staggered links)
 const burger = document.getElementById('burgerBtn');
@@ -1017,9 +1023,10 @@ if(counters.length && !reduceMotion){
   counters.forEach(el=>so.observe(el));
 }
 
-// Ambient ember particles
+// Ambient ember particles (skipped on touch devices — a full-screen canvas
+// repainting every frame fights with scroll compositing and causes jank on mobile)
 (function(){
-  if(reduceMotion) return;
+  if(reduceMotion || isTouch) return;
   const canvas = document.getElementById('ambientCanvas');
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
