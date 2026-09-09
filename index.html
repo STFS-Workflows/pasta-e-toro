@@ -127,7 +127,7 @@ header.scrolled{padding:14px 0;background:rgba(29,9,13,.92);backdrop-filter:blur
 .burger{display:none;flex-direction:column;gap:5px;width:30px;z-index:1200;}
 .burger span{height:2px;background:var(--cream);border-radius:2px;transition:all .35s var(--ease);}
 .mobile-panel{position:fixed;inset:0;background:linear-gradient(160deg,var(--maroon-deep),#170406);z-index:1100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
-  clip-path:circle(3% at calc(100% - 40px) 40px);transition:clip-path .7s var(--ease);pointer-events:none;}
+  clip-path:circle(0% at calc(100% - 40px) 40px);transition:clip-path .7s var(--ease);pointer-events:none;}
 .mobile-panel.open{clip-path:circle(150% at calc(100% - 40px) 40px);pointer-events:auto;}
 .mobile-panel a{font-family:'Cormorant Garamond',serif;font-size:2rem;opacity:0;transform:translateY(24px);transition:opacity .5s var(--ease),transform .5s var(--ease);transition-delay:calc(var(--i,0) * 60ms);}
 .mobile-panel.open a{opacity:1;transform:translateY(0);}
