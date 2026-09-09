@@ -126,11 +126,30 @@ header.scrolled{padding:14px 0;background:rgba(29,9,13,.92);backdrop-filter:blur
 .nav-cta .btn{padding:11px 22px;font-size:.7rem;}
 .burger{display:none;flex-direction:column;gap:5px;width:30px;z-index:1200;}
 .burger span{height:2px;background:var(--cream);border-radius:2px;transition:all .35s var(--ease);}
-.mobile-panel{position:fixed;inset:0;background:linear-gradient(160deg,var(--maroon-deep),#170406);z-index:1100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
-  clip-path:circle(0% at calc(100% - 40px) 40px);transition:clip-path .7s var(--ease);pointer-events:none;}
-.mobile-panel.open{clip-path:circle(150% at calc(100% - 40px) 40px);pointer-events:auto;}
-.mobile-panel a{font-family:'Cormorant Garamond',serif;font-size:2rem;opacity:0;transform:translateY(24px);transition:opacity .5s var(--ease),transform .5s var(--ease);transition-delay:calc(var(--i,0) * 60ms);}
-.mobile-panel.open a{opacity:1;transform:translateY(0);}
+.mobile-panel-backdrop{position:fixed;inset:0;background:rgba(10,3,5,.6);backdrop-filter:blur(3px);z-index:1099;
+  opacity:0;pointer-events:none;transition:opacity .4s var(--ease);}
+.mobile-panel-backdrop.open{opacity:1;pointer-events:auto;}
+.mobile-panel{position:fixed;top:0;right:0;bottom:0;width:min(360px,86vw);
+  background:linear-gradient(165deg,var(--maroon),var(--maroon-deep));z-index:1100;
+  display:flex;flex-direction:column;box-shadow:-20px 0 60px rgba(0,0,0,.5);
+  transform:translateX(100%);transition:transform .5s var(--ease);pointer-events:none;}
+.mobile-panel.open{transform:translateX(0);pointer-events:auto;}
+.mobile-panel-head{display:flex;align-items:center;justify-content:space-between;padding:22px 22px;border-bottom:1px solid rgba(201,162,74,.2);}
+.mobile-panel-head .logo{font-size:1.3rem;}
+.mobile-panel-close{width:38px;height:38px;border-radius:50%;border:1px solid rgba(247,239,226,.3);color:var(--cream);
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;transition:all .3s var(--ease);}
+.mobile-panel-close:hover{background:var(--gold);color:var(--maroon-deep);border-color:var(--gold);}
+.mobile-panel-nav{display:flex;flex-direction:column;padding:14px 10px;overflow-y:auto;flex:1;}
+.mobile-panel-nav a{display:flex;align-items:center;gap:16px;padding:16px 12px;border-radius:8px;
+  font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--cream);
+  opacity:0;transform:translateX(18px);transition:opacity .45s var(--ease),transform .45s var(--ease),background .25s;
+  transition-delay:calc(var(--i,0) * 55ms);}
+.mobile-panel.open .mobile-panel-nav a{opacity:1;transform:translateX(0);}
+.mobile-panel-nav a:active,.mobile-panel-nav a:hover{background:rgba(201,162,74,.12);}
+.mobile-panel-nav a .num{font-family:'Jost',sans-serif;font-size:.72rem;color:var(--gold);letter-spacing:.05em;width:22px;flex-shrink:0;}
+.mobile-panel-foot{padding:20px 22px 28px;border-top:1px solid rgba(201,162,74,.2);display:flex;flex-direction:column;gap:14px;}
+.mobile-panel-foot .btn{width:100%;justify-content:center;}
+.mobile-panel-foot p{font-size:.8rem;color:#d8c7ba;text-align:center;}
 
 /* ---------- HERO ---------- */
 .hero{
@@ -449,12 +468,24 @@ footer{background:var(--maroon-deep);padding:70px 0 30px;border-top:1px solid rg
   </div>
 </header>
 
+<div class="mobile-panel-backdrop" id="mobilePanelBackdrop"></div>
 <div class="mobile-panel" id="mobilePanel">
-  <a href="#menu">Menu</a>
-  <a href="#wnetrze">Wnętrze</a>
-  <a href="#opinie">Opinie</a>
-  <a href="#kontakt">Kontakt</a>
-  <a href="#rezerwacja" class="btn btn-gold" style="margin-top:20px;">Rezerwuj stolik</a>
+  <div class="mobile-panel-head">
+    <a href="#home" class="logo">Pasta <span>e</span> Toro</a>
+    <button class="mobile-panel-close" id="mobilePanelClose" aria-label="Zamknij menu">✕</button>
+  </div>
+  <nav class="mobile-panel-nav">
+    <a href="#menu"><span class="num">01</span>Menu</a>
+    <a href="#wnetrze"><span class="num">02</span>Wnętrze</a>
+    <a href="#opinie"><span class="num">03</span>Opinie</a>
+    <a href="#kontakt"><span class="num">04</span>Kontakt</a>
+    <a href="#rezerwacja"><span class="num">05</span>Rezerwacja</a>
+    <a href="#dostawa"><span class="num">06</span>Zamów na wynos</a>
+  </nav>
+  <div class="mobile-panel-foot">
+    <a href="#rezerwacja" class="btn btn-gold">Rezerwuj stolik</a>
+    <p>+48 535 645 164 · Codziennie 13:00–22:00</p>
+  </div>
 </div>
 
 <!-- ================= HERO ================= -->
@@ -961,18 +992,30 @@ window.addEventListener('scroll', ()=>{
   }
 },{passive:true});
 
-// Mobile menu (fullscreen clip-path overlay, staggered links)
+// Mobile menu (slide-in drawer, closable by X / backdrop / Escape / link tap)
 const burger = document.getElementById('burgerBtn');
 const mobilePanel = document.getElementById('mobilePanel');
-mobilePanel.querySelectorAll('a').forEach((a,i)=>a.style.setProperty('--i', i));
-burger.addEventListener('click', ()=>{
-  mobilePanel.classList.toggle('open');
-  document.body.style.overflow = mobilePanel.classList.contains('open') ? 'hidden' : '';
-});
-mobilePanel.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{
+const mobilePanelBackdrop = document.getElementById('mobilePanelBackdrop');
+const mobilePanelClose = document.getElementById('mobilePanelClose');
+mobilePanel.querySelectorAll('.mobile-panel-nav a').forEach((a,i)=>a.style.setProperty('--i', i));
+
+function openMobilePanel(){
+  mobilePanel.classList.add('open');
+  mobilePanelBackdrop.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeMobilePanel(){
   mobilePanel.classList.remove('open');
+  mobilePanelBackdrop.classList.remove('open');
   document.body.style.overflow = '';
-}));
+}
+burger.addEventListener('click', ()=>{
+  mobilePanel.classList.contains('open') ? closeMobilePanel() : openMobilePanel();
+});
+mobilePanelClose.addEventListener('click', closeMobilePanel);
+mobilePanelBackdrop.addEventListener('click', closeMobilePanel);
+mobilePanel.querySelectorAll('a').forEach(a=>a.addEventListener('click', closeMobilePanel));
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeMobilePanel(); });
 
 // Reveal on scroll (fade/slide + line-mask headings)
 const revealEls = document.querySelectorAll('.reveal, .reveal-scale, .reveal-line');
